@@ -1,0 +1,16 @@
+FROM debian:jessie
+
+# Install Ansible
+RUN true \
+ && echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list \
+ && apt-get update && apt-get install -y \
+    build-essential \
+    software-properties-common \
+    apt-transport-https \
+ && apt-get update && apt-get install -y \
+    ansible \
+    git \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install Ansible inventory file
+RUN echo "[local]\nlocalhost ansible_connection=local" > /etc/ansible/hosts

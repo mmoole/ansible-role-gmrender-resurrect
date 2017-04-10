@@ -1,0 +1,76 @@
+# Rolle um gmediarender-resurrect zu installieren
+
+- name: install dependencies
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+  - build-essential
+  - git
+  - autoconf
+  - automake
+  - libtool
+  - libupnp-dev
+  - libgstreamer1.0-dev
+  - gstreamer1.0-plugins-base
+  - gstreamer1.0-plugins-good
+  - gstreamer1.0-plugins-bad
+  - gstreamer1.0-plugins-ugly
+  - gstreamer1.0-libav
+  - uuid-runtime
+  register: deps
+
+- name: install output package
+  package:
+    name: "gstreamer1.0-{{ gmrrs_outputpackagetype }}"
+    state: latest
+  register: package_output
+
+- name: git clone gmrender-resurrect from github.com/hzeller/gmrender-resurrect
+  git:
+    depth: 2
+    dest: "{{ gmrrs_sourcedir }}"
+    repo: https://github.com/hzeller/gmrender-resurrect.git
+  register: git_gmrenderresurrect
+
+- name: copy install script
+  template:
+    src: install_gmrender-resurrect.sh.j2
+    dest: "{{ gmrrs_sourcedir }}/install_gmrender-resurrect.sh"
+    mode: 0744
+  register: template_installscript
+
+- name: install gmrender-resurrect via script
+  command: "{{ gmrrs_sourcedir }}/install_gmrender-resurrect.sh"
+  become: true
+  become_method: sudo
+  when: git_gmrenderresurrect.changed or template_installscript.changed or deps.changed
+  register: install_gmrenderresurrect
+  notify: restart gmediarender
+
+- name: create user for gmrender-resurrect
+  user:
+    name: "{{ gmrrs_user }}"
+    groups: "{{ gmrrs_group }}"
+    append: yes
+    shell: /sbin/nologin
+    state: present
+
+- name: copy launchd service template
+  template:
+    src: gmediarender.service.j2
+    dest: /etc/systemd/system/gmediarender.service
+    mode: 0644
+  register: template_launchd
+
+- name: reload systemd services
+  command: "systemctl daemon-reload"
+  become: yes
+  become_method: sudo
+  when: template_launchd.changed
+
+- name: ensure gmediarender service is startet on boot
+  service:
+    name: gmediarender
+    enabled: yes
+    state: started

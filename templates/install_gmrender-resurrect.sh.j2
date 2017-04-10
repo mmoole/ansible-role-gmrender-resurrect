@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# via https://github.com/bobzoller/ansible-role-shairport-sync/blob/master/files/compile.sh
+set -e
+set -o pipefail
+
+# via https://github.com/hzeller/gmrender-resurrect/blob/master/INSTALL.md
+cd /usr/src/gmrender-resurrect
+
+# autoreconf -fi
+./autogen.sh
+
+# ./configure
+
+./configure CPPFLAGS="-DGMRENDER_UUID='\"`{{ inventory_hostname | to_uuid }}`\"'"
+make
+make install
+
+
+# rebuild libs cache
+ldconfig -v

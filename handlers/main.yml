@@ -1,0 +1,6 @@
+---
+
+- name: restart gmediarender
+  service:
+    name: gmediarender
+    state: restarted
