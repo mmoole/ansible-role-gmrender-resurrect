@@ -3,7 +3,7 @@
 - name: install dependencies
   package:
     name: '{{ item }}'
-    state: latest
+    state: present
   with_items:
   - build-essential
   - git
@@ -23,7 +23,7 @@
 - name: install output package
   package:
     name: "gstreamer1.0-{{ gmrrs_outputpackagetype }}"
-    state: latest
+    state: present
   register: package_output
 
 - name: git clone gmrender-resurrect from github.com/hzeller/gmrender-resurrect
